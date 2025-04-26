@@ -96,13 +96,13 @@ int main()
         // sleep_ms(1000); // Aguarda 1ms
         // npClear();      // Limpa a matriz de LEDs
 
-        for (valor = 0; valor < 5; valor++)
-        {
-            sleep_ms(1000); // Aguarda 1ms
-            npClear();
-            sleep_ms(10);
-            npSetRow(valor, COLOR_BLUE);
-        }
+        // for (valor = 0; valor < 5; valor++)
+        // {
+        //     sleep_ms(1000); // Aguarda 1ms
+        //     npClear();
+        //     sleep_ms(10);
+        //     npSetRow(valor, COLOR_BLUE);
+        // }
     }
 }
 

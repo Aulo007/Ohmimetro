@@ -25,6 +25,11 @@ void detectar_valor_resistor(int resistencia)
     int potencia = posicao - 1;
     int potencia_2_digitos = posicao - 2;
 
+    if (potencia_2_digitos < 100)
+    {
+        potencia_2_digitos = 0;
+    }
+
     printf("Potência: %d\n", potencia); // Imprime a potência
 
     for (int i = posicao - 1; i >= 0; i--)
@@ -36,6 +41,11 @@ void detectar_valor_resistor(int resistencia)
     float erro = 0;
     float menor_erro = 1e9;
     int resistencia_teorica_atual = 0;
+
+    if (resistencia < 100)
+    {
+        potencia = 0;
+    }
 
     for (int i = 0; i < 24; i++)
     {
@@ -55,7 +65,7 @@ void detectar_valor_resistor(int resistencia)
 int main(void)
 {
     system("chcp 65001 > NULL");
-    int num = 4970;
+    int num = 123;
 
     /*
         Código simples para separar os dígitos de um número.
