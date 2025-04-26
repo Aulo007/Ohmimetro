@@ -16,6 +16,7 @@ typedef struct {
 } npColor_t;
 
 // Cores predefinidas
+#define COLOR_BLACK  (npColor_t){0, 0, 0}
 #define COLOR_RED     (npColor_t){255, 0, 0}
 #define COLOR_GREEN   (npColor_t){0, 255, 0}
 #define COLOR_BLUE    (npColor_t){0, 0, 255}

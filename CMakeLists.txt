@@ -41,8 +41,8 @@ pico_set_program_name(Ohmimetro "Ohmimetro")
 pico_set_program_version(Ohmimetro "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(Ohmimetro 0)
-pico_enable_stdio_usb(Ohmimetro 0)
+pico_enable_stdio_uart(Ohmimetro 1)
+pico_enable_stdio_usb(Ohmimetro 1)
 
 pico_generate_pio_header(Ohmimetro ${CMAKE_CURRENT_LIST_DIR}/ws2818b.pio)
 

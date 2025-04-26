@@ -7,6 +7,7 @@
 #include "lib/ssd1306.h"
 #include "lib/font.h"
 #include "lib/matrizRGB.h"
+#include "math.h"
 
 // ==============================
 // Definições dos pinos e constantes
@@ -57,6 +58,55 @@ void gpio_irq_handler(uint gpio, uint32_t events)
 }
 
 // ==============================
+// Estrutura para retornar dados do resistor
+// ==============================
+
+typedef struct
+{
+    int primeiro_digito;
+    int segundo_digito;
+    int multiplicador;
+    float valor_medido;
+    float valor_teorico;
+    float erro_percentual;
+} DadosResistor;
+
+DadosResistor detectar_valor_resistor(float resistencia);
+void exibir_resistor_no_display(DadosResistor dados);
+
+const float tabela_resistores_e24[] = {
+    1.0, 1.1, 1.2, 1.3, 1.5, 1.6,
+    1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
+    3.3, 3.6, 3.9, 4.3, 4.7, 5.1,
+    5.6, 6.2, 6.8, 7.5, 8.2, 9.1};
+
+npColor_t cores_resistores[] = {
+    COLOR_BLACK,
+    COLOR_BROWN,
+    COLOR_RED,
+    COLOR_ORANGE,
+    COLOR_YELLOW,
+    COLOR_GREEN,
+    COLOR_BLUE,
+    COLOR_VIOLET,
+    COLOR_GREY,
+    COLOR_WHITE,
+    COLOR_GOLD,
+    COLOR_SILVER};
+
+const char *cores[] = {
+    "PRETO",    // 0
+    "MARROM",   // 1
+    "VERMELHO", // 2
+    "LARANJA",  // 3
+    "AMARELO",  // 4
+    "VERDE",    // 5
+    "AZUL",     // 6
+    "VIOLETA",  // 7
+    "CINZA",    // 8
+    "BRANCO"    // 9
+};
+// ==============================
 // Função principal
 // ==============================
 int main()
@@ -85,24 +135,20 @@ int main()
         r_x = calcular_resistencia(adc_valor);
 
         // Atualiza display apenas a cada 700ms para evitar flickering
+
+        DadosResistor valores = detectar_valor_resistor(r_x); // Detecta o valor do resistor
+
+        printf("Valor primeiro digito: %d\n", valores.primeiro_digito);
+        printf("Valor segundo digito: %d\n", valores.segundo_digito);
+        printf("Valor multiplicador: %d\n", valores.multiplicador);
+        printf("Valor medido: %.2f\n", valores.valor_medido);
+        printf("Valor teorico: %.2f\n", valores.valor_teorico);
+        printf("Erro percentual: %.2f%%\n", valores.erro_percentual);
+
         if (tempo_atual - tempo_anterior >= 700)
         {
-            tempo_anterior = tempo_atual;
-            atualizar_display(cor);
+            exibir_resistor_no_display(valores); // Exibe os dados do resistor no display
         }
-
-        // npSetColumn(valor, COLOR_RED);
-        // npWrite();      // Atualiza a matriz de LEDs
-        // sleep_ms(1000); // Aguarda 1ms
-        // npClear();      // Limpa a matriz de LEDs
-
-        // for (valor = 0; valor < 5; valor++)
-        // {
-        //     sleep_ms(1000); // Aguarda 1ms
-        //     npClear();
-        //     sleep_ms(10);
-        //     npSetRow(valor, COLOR_BLUE);
-        // }
     }
 }
 
@@ -168,33 +214,98 @@ float calcular_resistencia(float adc_valor)
     return (R_CONHECIDO * adc_valor) / (ADC_RESOLUTION - adc_valor);
 }
 
-void atualizar_display(bool cor)
+DadosResistor detectar_valor_resistor(float resistencia)
 {
-    char str_adc[10];
-    char str_resistencia[10];
+    DadosResistor dados;
+    dados.valor_medido = resistencia;
 
-    // Converte os valores para strings
-    sprintf(str_adc, "%1.0f", ler_adc_com_media());
-    sprintf(str_resistencia, "%1.0f", r_x);
+    // Determinar potência (ordem de grandeza)
+    float valor_normalizado = resistencia;
+    int potencia = 0;
 
-    // Atualiza o display
-    ssd1306_fill(&ssd, !cor);
+    // Normalizar para valor entre 1.0 e 99.9
+    if (resistencia >= 100)
+    {
+        while (valor_normalizado >= 100)
+        {
+            valor_normalizado /= 10;
+            potencia++;
+        }
+    }
+    else if (resistencia < 10 && resistencia > 0)
+    {
+        while (valor_normalizado < 10)
+        {
+            valor_normalizado *= 10;
+            potencia--;
+        }
+    }
 
-    // Interface gráfica
-    ssd1306_rect(&ssd, 3, 3, 122, 60, cor, !cor); // Desenha um retângulo
-    ssd1306_line(&ssd, 3, 25, 123, 25, cor);      // Desenha uma linha horizontal
-    ssd1306_line(&ssd, 3, 37, 123, 37, cor);      // Desenha uma linha horizontal
-    ssd1306_line(&ssd, 44, 37, 44, 60, cor);      // Desenha uma linha vertical
+    // Extrair primeiro e segundo dígitos
+    dados.primeiro_digito = (int)valor_normalizado / 10;
+    dados.segundo_digito = (int)valor_normalizado % 10;
+    dados.multiplicador = potencia;
 
-    // Textos
-    ssd1306_draw_string(&ssd, "CEPEDI   TIC37", 8, 6);
-    ssd1306_draw_string(&ssd, "EMBARCATECH", 20, 16);
-    ssd1306_draw_string(&ssd, "  Ohmimetro", 10, 28);
-    ssd1306_draw_string(&ssd, "ADC", 13, 41);
-    ssd1306_draw_string(&ssd, "Resisten.", 50, 41);
-    ssd1306_draw_string(&ssd, str_adc, 8, 52);
-    ssd1306_draw_string(&ssd, str_resistencia, 59, 52);
+    // Buscar valor mais próximo na tabela E24
+    float valor_normalizado_tabela = 0;
+    float menor_diferenca = 100.0;
 
-    // Atualiza o display
+    for (int i = 0; i < 24; i++)
+    {
+        float diferenca = fabs(valor_normalizado - tabela_resistores_e24[i] * 10);
+        if (diferenca < menor_diferenca)
+        {
+            menor_diferenca = diferenca;
+            valor_normalizado_tabela = tabela_resistores_e24[i] * 10;
+        }
+    }
+
+    // Recalcular os dígitos com o valor da tabela
+    dados.primeiro_digito = (int)valor_normalizado_tabela / 10;
+    dados.segundo_digito = (int)valor_normalizado_tabela % 10;
+
+    // Calcular valor teórico com os dígitos e multiplicador
+    dados.valor_teorico = (dados.primeiro_digito * 10 + dados.segundo_digito) * pow(10, dados.multiplicador);
+
+    // Calcular erro percentual
+    if (dados.valor_teorico != 0)
+    {
+        dados.erro_percentual = fabs(dados.valor_medido - dados.valor_teorico) / dados.valor_teorico * 100;
+    }
+    else
+    {
+        dados.erro_percentual = 0;
+    }
+
+    return dados;
+}
+
+void exibir_resistor_no_display(DadosResistor dados)
+{
+    char str_valor_medido[20];
+    char str_valor_teorico[20];
+    char str_erro[20];
+
+    // Formatar os valores diretamente sem processamento adicional
+    sprintf(str_valor_medido, "%1.0f", dados.valor_medido);
+    sprintf(str_valor_teorico, "%1.0f", dados.valor_teorico);
+    sprintf(str_erro, "%1.0f%%", dados.erro_percentual);
+
+    // Limpar o display
+    ssd1306_fill(&ssd, false);
+
+    // Cabeçalho
+
+    // Desenhar valores
+    ssd1306_draw_string(&ssd, "Medido:", 0, 0);
+    ssd1306_draw_string(&ssd, str_valor_medido, 78, 0);
+
+    ssd1306_draw_string(&ssd, "Teorico:", 0, 10);
+    ssd1306_draw_string(&ssd, str_valor_teorico, 78, 10);
+
+    ssd1306_draw_string(&ssd, "Erro:", 0, 20);
+    ssd1306_draw_string(&ssd, str_erro, 80, 20);
+
+    // Enviar dados para o display
     ssd1306_send_data(&ssd);
 }
