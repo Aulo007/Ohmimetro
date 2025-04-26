@@ -6,6 +6,7 @@
 #include "hardware/i2c.h"
 #include "lib/ssd1306.h"
 #include "lib/font.h"
+#include "lib/matrizRGB.h"
 
 // ==============================
 // Definições dos pinos e constantes
@@ -24,7 +25,7 @@
 #define R_CONHECIDO 10000   // Resistor de 10k ohm
 #define ADC_VREF 3.31       // Tensão de referência do ADC
 #define ADC_RESOLUTION 4095 // Resolução do ADC (12 bits)
-#define NUM_AMOSTRAS 5000    // Número de amostras para média
+#define NUM_AMOSTRAS 5000   // Número de amostras para média
 
 // ==============================
 // Variáveis globais
@@ -66,12 +67,14 @@ int main()
     init_display();
     init_adc();
     init_buttons();
+    npInit(7); // Inicializa a matriz de LEDs
 
     // Configuração da interrupção para BOOTSEL
     gpio_set_irq_enabled_with_callback(BOTAO_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
     bool cor = true;
     uint32_t tempo_anterior = 0;
+    int valor = 0;
 
     while (true)
     {
@@ -86,6 +89,19 @@ int main()
         {
             tempo_anterior = tempo_atual;
             atualizar_display(cor);
+        }
+
+        // npSetColumn(valor, COLOR_RED);
+        // npWrite();      // Atualiza a matriz de LEDs
+        // sleep_ms(1000); // Aguarda 1ms
+        // npClear();      // Limpa a matriz de LEDs
+
+        for (valor = 0; valor < 5; valor++)
+        {
+            sleep_ms(1000); // Aguarda 1ms
+            npClear();
+            sleep_ms(10);
+            npSetRow(valor, COLOR_BLUE);
         }
     }
 }
