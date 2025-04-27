@@ -138,12 +138,14 @@ int main()
 
         DadosResistor valores = detectar_valor_resistor(r_x); // Detecta o valor do resistor
 
-        printf("Valor primeiro digito: %d\n", valores.primeiro_digito);
-        printf("Valor segundo digito: %d\n", valores.segundo_digito);
-        printf("Valor multiplicador: %d\n", valores.multiplicador);
-        printf("Valor medido: %.2f\n", valores.valor_medido);
-        printf("Valor teorico: %.2f\n", valores.valor_teorico);
-        printf("Erro percentual: %.2f%%\n", valores.erro_percentual);
+        // printf("Valor primeiro digito: %d\n", valores.primeiro_digito);
+        // printf("Valor segundo digito: %d\n", valores.segundo_digito);
+        // printf("Valor multiplicador: %d\n", valores.multiplicador);
+        // printf("Valor medido: %.2f\n", valores.valor_medido);
+        // printf("Valor teorico: %.2f\n", valores.valor_teorico);
+        // printf("Erro percentual: %.2f%%\n", valores.erro_percentual);
+
+        // printf("Valor adc: %.2f\n", adc_valor);
 
         if (tempo_atual - tempo_anterior >= 700)
         {
@@ -197,6 +199,7 @@ void init_buttons(void)
 float ler_adc_com_media(void)
 {
     adc_select_input(2); // Seleciona o ADC 2 (pino 28)
+    printf("Valor do adc_max: %.2f\n", adc_read());
 
     float soma = 0.0f;
     for (int i = 0; i < NUM_AMOSTRAS; i++)
