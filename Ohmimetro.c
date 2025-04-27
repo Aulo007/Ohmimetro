@@ -41,9 +41,9 @@ void init_i2c(void);
 void init_display(void);
 void init_adc(void);
 void init_buttons(void);
-void atualizar_display(bool cor);
 float calcular_resistencia(float adc_valor);
 float ler_adc_com_media(void);
+void replace_char(char *str, char find, char replace);
 
 // ==============================
 // Manipulador de interrupção para modo BOOTSEL
@@ -285,16 +285,23 @@ void exibir_resistor_no_display(DadosResistor dados)
     char str_valor_medido[20];
     char str_valor_teorico[20];
     char str_erro[20];
+    char buffer[20];
 
-    // Formatar os valores diretamente sem processamento adicional
-    sprintf(str_valor_medido, "%1.0f", dados.valor_medido);
-    sprintf(str_valor_teorico, "%1.0f", dados.valor_teorico);
-    sprintf(str_erro, "%1.0f%%", dados.erro_percentual);
+    // Formatar valores substituindo ponto por vírgula
+    sprintf(buffer, "%.2f", dados.valor_medido);
+    replace_char(buffer, '.', ',');
+    strcpy(str_valor_medido, buffer);
+
+    sprintf(buffer, "%.2f", dados.valor_teorico);
+    replace_char(buffer, '.', ',');
+    strcpy(str_valor_teorico, buffer);
+
+    sprintf(buffer, "%.2f%%", dados.erro_percentual);
+    replace_char(buffer, '.', ',');
+    strcpy(str_erro, buffer);
 
     // Limpar o display
     ssd1306_fill(&ssd, false);
-
-    // Cabeçalho
 
     // Desenhar valores
     ssd1306_draw_string(&ssd, "Medido:", 0, 0);
@@ -306,6 +313,25 @@ void exibir_resistor_no_display(DadosResistor dados)
     ssd1306_draw_string(&ssd, "Erro:", 0, 20);
     ssd1306_draw_string(&ssd, str_erro, 80, 20);
 
+    // Exemplo de uso dos novos caracteres (posições ajustáveis)
+    ssd1306_draw_char(&ssd, '!', 10, 40); // Exclamação
+    ssd1306_draw_char(&ssd, '?', 20, 40); // Interrogação
+    ssd1306_draw_char(&ssd, ':', 30, 40); // Dois pontos
+    ssd1306_draw_char(&ssd, ';', 40, 40); // Ponto e vírgula
+    ssd1306_draw_char(&ssd, ',', 50, 40); // Vírgula
+    ssd1306_draw_char(&ssd, '.', 60, 40); // Ponto final
+    ssd1306_draw_char(&ssd, '%', 70, 40); // Hífen
+
     // Enviar dados para o display
     ssd1306_send_data(&ssd);
+}
+
+// Função auxiliar para substituir caracteres
+void replace_char(char *str, char find, char replace)
+{
+    for (char *p = str; *p; p++)
+    {
+        if (*p == find)
+            *p = replace;
+    }
 }
