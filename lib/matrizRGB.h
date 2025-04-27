@@ -21,14 +21,13 @@ typedef struct {
 #define COLOR_GREEN   (npColor_t){0, 255, 0}
 #define COLOR_BLUE    (npColor_t){0, 0, 255}
 #define COLOR_WHITE   (npColor_t){255, 255, 255}
-#define COLOR_BLACK   (npColor_t){0, 0, 0}
-#define COLOR_YELLOW  (npColor_t){255, 255, 0}
+#define COLOR_YELLOW  (npColor_t){255, 170, 0}
 #define COLOR_CYAN    (npColor_t){0, 255, 255}
 #define COLOR_MAGENTA (npColor_t){255, 0, 255}
 #define COLOR_PURPLE  (npColor_t){128, 0, 128}
-#define COLOR_ORANGE  (npColor_t){255, 165, 0}
-#define COLOR_BROWN   (npColor_t){139, 69, 19}
-#define COLOR_VIOLET  (npColor_t){148, 0, 211}
+#define COLOR_ORANGE  (npColor_t){255, 20, 0}
+#define COLOR_BROWN   (npColor_t){60, 40, 0}
+#define COLOR_VIOLET  (npColor_t){175, 0, 168}
 #define COLOR_GREY    (npColor_t){128, 128, 128}
 #define COLOR_GOLD    (npColor_t){255, 215, 0}
 #define COLOR_SILVER  (npColor_t){192, 192, 192}
@@ -44,7 +43,9 @@ void npAnimateFrames(int period, int num_frames, npColor_t frames[num_frames][5]
 void npSetLED(int x, int y, npColor_t color);
 void npSetLEDIntensity(int x, int y, npColor_t color, float intensity);
 void npSetRow(int row, npColor_t color);
-void npSetColumn(int col, npColor_t color);
+void npSetRowIntensity(int row, npColor_t color, float intensity);
+void npSetColumn(int col, npColor_t color);;
+void npSetColumnItensity(int col, npColor_t color, float intensity);
 void npSetBorder(npColor_t color);
 void npSetDiagonal(bool mainDiagonal, npColor_t color);
 void npFill(npColor_t color);

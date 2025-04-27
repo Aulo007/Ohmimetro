@@ -26,7 +26,7 @@
 #define R_CONHECIDO 10000   // Resistor de 10k ohm
 #define ADC_VREF 3.31       // Tensão de referência do ADC
 #define ADC_RESOLUTION 4095 // Resolução do ADC (12 bits)
-#define NUM_AMOSTRAS 5000   // Número de amostras para média
+#define NUM_AMOSTRAS 50000   // Número de amostras para média
 
 // ==============================
 // Variáveis globais
@@ -202,7 +202,7 @@ float ler_adc_com_media(void)
     for (int i = 0; i < NUM_AMOSTRAS; i++)
     {
         soma += adc_read();
-        sleep_us(100);
+        sleep_us(1);
     }
 
     return soma / NUM_AMOSTRAS;
@@ -282,17 +282,18 @@ DadosResistor detectar_valor_resistor(float resistencia)
 
 void exibir_resistor_no_display(DadosResistor dados)
 {
+    int i = 0;
     char str_valor_medido[20];
     char str_valor_teorico[20];
     char str_erro[20];
     char buffer[20];
 
     // Formatar valores substituindo ponto por vírgula
-    sprintf(buffer, "%.2f", dados.valor_medido);
+    sprintf(buffer, "%1.0f", dados.valor_medido);
     replace_char(buffer, '.', ',');
     strcpy(str_valor_medido, buffer);
 
-    sprintf(buffer, "%.2f", dados.valor_teorico);
+    sprintf(buffer, "%1.0f", dados.valor_teorico);
     replace_char(buffer, '.', ',');
     strcpy(str_valor_teorico, buffer);
 
@@ -305,22 +306,36 @@ void exibir_resistor_no_display(DadosResistor dados)
 
     // Desenhar valores
     ssd1306_draw_string(&ssd, "Medido:", 0, 0);
-    ssd1306_draw_string(&ssd, str_valor_medido, 78, 0);
+    ssd1306_draw_string(&ssd, str_valor_medido, 70, 0);
 
     ssd1306_draw_string(&ssd, "Teorico:", 0, 10);
-    ssd1306_draw_string(&ssd, str_valor_teorico, 78, 10);
+    ssd1306_draw_string(&ssd, str_valor_teorico, 70, 10);
 
     ssd1306_draw_string(&ssd, "Erro:", 0, 20);
-    ssd1306_draw_string(&ssd, str_erro, 80, 20);
+    ssd1306_draw_string(&ssd, str_erro, 70, 20);
 
-    // Exemplo de uso dos novos caracteres (posições ajustáveis)
-    ssd1306_draw_char(&ssd, '!', 10, 40); // Exclamação
-    ssd1306_draw_char(&ssd, '?', 20, 40); // Interrogação
-    ssd1306_draw_char(&ssd, ':', 30, 40); // Dois pontos
-    ssd1306_draw_char(&ssd, ';', 40, 40); // Ponto e vírgula
-    ssd1306_draw_char(&ssd, ',', 50, 40); // Vírgula
-    ssd1306_draw_char(&ssd, '.', 60, 40); // Ponto final
-    ssd1306_draw_char(&ssd, '%', 70, 40); // Hífen
+    for (i = 0; i < 10; i++)
+    {
+        if (i == dados.primeiro_digito)
+        {
+            ssd1306_draw_string(&ssd, "FAIXA1:", 0, 35);
+            ssd1306_draw_string(&ssd, cores[i], 60, 35);
+            npSetRowIntensity(0, cores_resistores[i], 1);
+        }
+        if (i == dados.segundo_digito)
+        {
+            ssd1306_draw_string(&ssd, "FAIXA2:", 0, 45);
+            ssd1306_draw_string(&ssd, cores[i], 60, 45);
+            npSetRowIntensity(2, cores_resistores[i], 1);
+        }
+
+        if (i == dados.multiplicador)
+        {
+            ssd1306_draw_string(&ssd, "FAIXA3:", 0, 55);
+            ssd1306_draw_string(&ssd, cores[i], 60, 55);
+            npSetRowIntensity(4, cores_resistores[i], 1);
+        }
+    }
 
     // Enviar dados para o display
     ssd1306_send_data(&ssd);
