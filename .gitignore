@@ -6,3 +6,9 @@ pico_sdk_import.cmake
 .gitignore
 extra\output
 c\Users
+testandologica.c
+test2.c
+3.31.3
+.mypy_cache
+.vscode
+pico_sdk_import.cmake
