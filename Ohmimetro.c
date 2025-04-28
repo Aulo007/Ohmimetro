@@ -23,16 +23,20 @@
 // ==============================
 // Configurações do ohmímetro
 // ==============================
-#define R_CONHECIDO 10000   // Resistor de 10k ohm
 #define ADC_VREF 3.31       // Tensão de referência do ADC
 #define ADC_RESOLUTION 4095 // Resolução do ADC (12 bits)
-#define NUM_AMOSTRAS 50000   // Número de amostras para média
+#define NUM_AMOSTRAS 50000  // Número de amostras para média
+const float RESISTORES[] = {10000.0f, 14790.0f, 32300.0f, 68100.0f};
+const int NUM_RESISTORES = sizeof(RESISTORES) / sizeof(RESISTORES[0]);
+volatile float R_CONHECIDO = 10000.0f; // inicializa
 
 // ==============================
 // Variáveis globais
 // ==============================
 static ssd1306_t ssd;
 volatile float r_x = 0.0; // Resistor desconhecido
+volatile uint32_t last_button_time = 0;
+volatile uint16_t contador = 0;
 
 // ==============================
 // Protótipos de funções
@@ -51,9 +55,25 @@ void replace_char(char *str, char find, char replace);
 // ==============================
 void gpio_irq_handler(uint gpio, uint32_t events)
 {
-    if (gpio == BOTAO_B)
-    {
-        reset_usb_boot(0, 0);
+    uint32_t current_time = to_ms_since_boot(get_absolute_time());
+
+    // printf("Ruído\n"); // Para debbugar o debouce. Verificar funcionamento.
+
+    if (current_time - last_button_time > 200)
+    { // Debounce 100ms
+        last_button_time = current_time;
+        if (gpio == BOTAO_B)
+        {
+            reset_usb_boot(0, 0);
+        }
+        else if (gpio == BOTAO_A)
+        {
+            contador = (contador + 1) % NUM_RESISTORES; // Avança e volta para 0 automaticamente
+
+            R_CONHECIDO = RESISTORES[contador];
+
+            printf("Faixa de precisão muda para: %.2f Ohms\n", R_CONHECIDO);
+        }
     }
 }
 
@@ -120,6 +140,7 @@ int main()
     npInit(7); // Inicializa a matriz de LEDs
 
     // Configuração da interrupção para BOOTSEL
+    gpio_set_irq_enabled_with_callback(BOTAO_A, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
     gpio_set_irq_enabled_with_callback(BOTAO_B, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
 
     bool cor = true;
@@ -199,7 +220,7 @@ void init_buttons(void)
 float ler_adc_com_media(void)
 {
     adc_select_input(2); // Seleciona o ADC 2 (pino 28)
-    printf("Valor do adc_max: %.2f\n", adc_read());
+    // printf("Valor do adc_max: %.2f\n", adc_read());
 
     float soma = 0.0f;
     for (int i = 0; i < NUM_AMOSTRAS; i++)
